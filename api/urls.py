@@ -1,9 +1,9 @@
 from django.urls import path
-from .views import albertpark, jellspark, bendigo, health
+from . import views
 
 urlpatterns = [
-    path("health", health),
-    path("albertpark", albertpark),
-    path("jellspark", jellspark),
-    path("bendigo", bendigo),
+    path("health", views.health),
+    path("results", views.results),
+    path("athletes/results", views.athlete_results),
+    path("athletes/compare", views.compare_athletes_view),
 ]

@@ -1,0 +1,50 @@
+import requests
+from api.services.resultshub_parsers import parse_js_arrays
+
+BASE_URL = "https://athsvic.resultshub.com.au/php"
+
+def fetch_resultshub_data(path, params):
+    url = f"{BASE_URL}/{path}"
+
+    response = requests.get(
+        url,
+        params=params,
+        timeout=10,
+    )
+    response.raise_for_status()
+
+    return {
+        "source_url": response.url,
+        "raw_text": response.text,
+    }   
+
+
+def fetch_event_results(season="2026", series="xcr", round_number="1", venue="all"):
+    raw = fetch_resultshub_data(
+        "resultsFileFetch.php",
+        {
+            "season": season,
+            "series": series,
+            "round": round_number,
+            "venue": venue,
+        },
+    )
+
+    tables = parse_js_arrays(raw["raw_text"])
+
+    return {
+        "source_url": raw["source_url"],
+        "season": season,
+        "series": series,
+        "round": round_number,
+        "venue": venue,
+        "table_count": len(tables),
+        "tables": tables,
+    }
+
+
+
+
+
+
+

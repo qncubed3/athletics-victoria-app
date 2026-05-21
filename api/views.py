@@ -1,191 +1,89 @@
-import json
-import re
-
-import requests
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from api.services.athlete_service import (
+    fetch_athlete_results,
+    compare_athletes,
+)
 
-RESULTSHUB_URL = "https://athsvic.resultshub.com.au/php/resultsFileFetch.php"
-
-
-ROUND_CONFIG = {
-    1: {
-        "slug": "albertpark",
-        "venue_name": "Albert Park",
-    },
-    2: {
-        "slug": "jellspark",
-        "venue_name": "Jells Park",
-    },
-    3: {
-        "slug": "bendigo",
-        "venue_name": "Bendigo",
-    },
-}
-
-
-def clean_value(value):
-    """
-    Normalize common ResultHub empty values.
-    """
-    if value in ("undefined", ""):
-        return None
-
-    return value
-
-
-def clean_row(row):
-    """
-    Clean a parsed ResultHub row.
-
-    Most ResultHub arrays contain dictionaries, but this keeps the parser safe
-    if an array ever contains a primitive value.
-    """
-    if not isinstance(row, dict):
-        return row
-
-    return {
-        key: clean_value(value)
-        for key, value in row.items()
-    }
-
-
-def parse_js_arrays(text):
-    """
-    Convert ResultHub's JavaScript-style data feed into JSON-like Python data.
-
-    ResultHub returns data like:
-
-        Signature_AlbertPark = [{...}];
-        sessions_AlbertPark = [{...}];
-        athletes_AlbertPark = [{...}];
-
-    This function extracts each variable assignment and parses the array.
-    """
-    pattern = r"([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(\[.*?\]);"
-    matches = re.findall(pattern, text, flags=re.DOTALL)
-
-    tables = {}
-
-    for table_name, array_text in matches:
-        try:
-            rows = json.loads(array_text)
-            tables[table_name] = [clean_row(row) for row in rows]
-
-        except json.JSONDecodeError as e:
-            tables[table_name] = {
-                "error": f"Could not parse table '{table_name}'",
-                "details": str(e),
-            }
-
-    return tables
-
-
-def build_resultshub_params(round_number):
-    return {
-        "season": "2026",
-        "series": "xcr",
-        "round": str(round_number),
-        "venue": "all",
-    }
-
-
-def fetch_resultshub_round(round_number):
-    """
-    Fetch and parse one Athletics Victoria XCR round from ResultHub.
-    """
-    round_config = ROUND_CONFIG.get(round_number, {})
-
-    response = requests.get(
-        RESULTSHUB_URL,
-        params=build_resultshub_params(round_number),
-        timeout=10,
-    )
-    response.raise_for_status()
-
-    tables = parse_js_arrays(response.text)
-
-    return {
-        "source_url": response.url,
-        "season": "2026",
-        "series": "xcr",
-        "round": round_number,
-        "venue_slug": round_config.get("slug"),
-        "venue_name": round_config.get("venue_name"),
-        "table_count": len(tables),
-        "tables": tables,
-    }
-
-
-def resultshub_round_response(round_number):
-    """
-    Convert Python/network/parser errors into JSON responses.
-
-    This prevents Vercel from showing a generic serverless crash page and gives
-    you a useful JSON error instead.
-    """
-    try:
-        data = fetch_resultshub_round(round_number)
-        return Response(data)
-
-    except requests.Timeout:
-        return Response(
-            {
-                "error": "Request to ResultHub timed out.",
-                "type": "Timeout",
-                "round": round_number,
-            },
-            status=status.HTTP_504_GATEWAY_TIMEOUT,
-        )
-
-    except requests.RequestException as e:
-        return Response(
-            {
-                "error": str(e),
-                "type": type(e).__name__,
-                "round": round_number,
-            },
-            status=status.HTTP_502_BAD_GATEWAY,
-        )
-
-    except Exception as e:
-        return Response(
-            {
-                "error": str(e),
-                "type": type(e).__name__,
-                "round": round_number,
-            },
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+from .services.resultshub_client import (
+    fetch_event_results,
+    
+)
+from .utils import handle_service_call
 
 
 @api_view(["GET"])
 def health(request):
-    return Response(
-        {
-            "status": "ok",
-            "service": "athletics-victoria-api",
-        }
+    return Response({
+        "status": "ok",
+        "service": "athletics-victoria-api",
+    })
+
+
+# @api_view(["GET"])
+# def config(request):
+#     season = request.GET.get("season", "2025")
+
+#     return handle_service_call(
+#         fetch_config,
+#         season=season,
+#     )
+
+@api_view(["GET"])
+def health(request):
+    return Response({
+        "status": "ok",
+        "service": "athletics-victoria-api",
+    })
+
+
+@api_view(["GET"])
+def results(request):
+    season = request.GET.get("season", "2026")
+    series = request.GET.get("series", "xcr")
+    round_number = request.GET.get("round", "1")
+    venue = request.GET.get("venue", "all")
+
+    return handle_service_call(
+        fetch_event_results,
+        season=season,
+        series=series,
+        round_number=round_number,
+        venue=venue,
     )
 
 
 @api_view(["GET"])
-def albertpark(request):
-    return resultshub_round_response(1)
+def athlete_results(request):
+    name = request.GET.get("name")
+
+    if not name:
+        return Response(
+            {"error": "Missing required query parameter: name"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    return handle_service_call(
+        fetch_athlete_results,
+        name=name,
+    )
 
 
 @api_view(["GET"])
-def jellspark(request):
-    return resultshub_round_response(2)
+def compare_athletes_view(request):
+    name1 = request.GET.get("name1")
+    name2 = request.GET.get("name2")
 
+    if not name1 or not name2:
+        return Response(
+            {"error": "Missing athlete names"},
+            status=400,
+        )
 
-@api_view(["GET"])
-def bendigo(request):
-    return resultshub_round_response(3)
-
-
-@api_view(["GET"])
-def results_by_round(request, round_number):
-    return resultshub_round_response(round_number)
+    return handle_service_call(
+        compare_athletes,
+        name1=name1,
+        name2=name2,
+    )
