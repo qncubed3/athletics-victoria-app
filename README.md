@@ -66,6 +66,86 @@ Run Server
 ```
 python manage.py runserver
 ```
+
+# API Usage
+Base local URL:
+```
+http://127.0.0.1:8000/api
+```
+Base deployed URL:
+```
+https://athletics-victoria-app.vercel.app/api
+```
+## Athlete Results
+```
+GET /api/athletes/results?name=LastName,FirstName
+```
+Fetches an athlete’s historical results and parses the upstream HTML table into structured JSON.
+
+Example response shape:
+```
+{
+  "source_url": "...",
+  "athlete_name": "Nguyen,Quan",
+  "data": {
+    "athlete_info": {
+      "athlete": "Quan Nguyen",
+      "club": "MUU",
+      "bib_year": "2026",
+      "bib": "2938",
+      "recent_result_age": "Open"
+    },
+    "results": [
+      {
+        "meet_date": "2026-05-16",
+        "event": "6km (XC Relay)",
+        "event_specification": null,
+        "performance": "23:34",
+        "wind": null,
+        "venue": "Jells Park"
+      }
+    ]
+  }
+}
+```
+
+## Athlete Head-to-Head comparison
+```
+GET /api/athletes/compare?athlete1=LastName,FirstName&athlete2=LastName,FirstName
+```
+Compares two athletes by finding overlapping results with the same meet date, event and venue.
+
+Each overlapping event includes a winner field:
+```
+0 = tie
+1 = athlete1 wins
+2 = athlete2 wins
+-1 = unknown / cannot compare
+```
+Example response shape:
+```
+{
+  "athlete1": "Nguyen,Quan",
+  "athlete2": "Another,Athlete",
+  "overlap_count": 3,
+  "summary": {
+    "athlete1_wins": 1,
+    "athlete2_wins": 2,
+    "ties": 0,
+    "unknown": 0
+  },
+  "comparisons": [
+    {
+      "meet_date": "2023-09-03",
+      "event": "21.1km (Road)",
+      "venue": "Burnley",
+      "athlete1_performance": "1:18:41",
+      "athlete2_performance": "1:09:49",
+      "winner": 2
+    }
+  ]
+}
+```
 # Planned API Design
 The long-term goal is to expose normalized entity-based endpoints instead such as:
 ```
