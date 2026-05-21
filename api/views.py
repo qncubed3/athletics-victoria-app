@@ -58,13 +58,11 @@ def parse_js_arrays(text):
 
     return tables
 
-
-@api_view(["GET"])
-def jells(request):
+def fetch_round(round_number):
     params = {
         "season": "2026",
         "series": "xcr",
-        "round": "1",
+        "round": str(round_number),
         "venue": "all",
     }
 
@@ -89,3 +87,18 @@ def jells(request):
         "table_count": len(tables),
         "tables": tables,
     })
+
+
+@api_view(["GET"])
+def albertpark(request):
+    return fetch_round(1)
+
+
+@api_view(["GET"])
+def jellspark(request):
+    return fetch_round(2)
+
+
+@api_view(["GET"])
+def bendigo(request):
+    return fetch_round(3)
