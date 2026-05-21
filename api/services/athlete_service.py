@@ -35,6 +35,11 @@ def compare_athletes(name1, name2):
 
     comparisons = []
 
+    athlete1_wins = 0
+    athlete2_wins = 0
+    ties = 0
+    unknown = 0
+
     for result1 in results1:
         key = (
             result1["meet_date"],
@@ -51,6 +56,15 @@ def compare_athletes(name1, name2):
                 result2["performance"],
             )
 
+            if winner == 1:
+                athlete1_wins += 1
+            elif winner == 2:
+                athlete2_wins += 1
+            elif winner == 0:
+                ties += 1
+            else:
+                unknown += 1
+
             comparisons.append({
                 "meet_date": result1["meet_date"],
                 "event": result1["event"],
@@ -64,6 +78,14 @@ def compare_athletes(name1, name2):
         "athlete1": name1,
         "athlete2": name2,
         "overlap_count": len(comparisons),
+
+        "summary": {
+            "athlete1_wins": athlete1_wins,
+            "athlete2_wins": athlete2_wins,
+            "ties": ties,
+            "unknown": unknown,
+        },
+
         "comparisons": comparisons,
     }
 
