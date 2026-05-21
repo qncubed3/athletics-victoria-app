@@ -1,11 +1,9 @@
 from django.urls import path
-from .views import jells
-
-from django.urls import path
-from . import views
+from .views import albertpark, jellspark, bendigo, health
 
 urlpatterns = [
-    path("albertpark", views.albertpark),
-    path("jellspark", views.jellspark),
-    path("bendigo", views.bendigo),
+    path("health", health),
+    path("albertpark", albertpark),
+    path("jellspark", jellspark),
+    path("bendigo", bendigo),
 ]
