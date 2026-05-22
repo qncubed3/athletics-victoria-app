@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>MUU Relay Results</title>
+    <style>
+        :root {
+            --bg: #f4f5f7;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --bar: #2563eb;
+            --bar-bg: #eff6ff;
+            --danger: #dc2626;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 32px;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .page-header {
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 32px;
+        }
+
+        #status {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+            gap: 20px;
+            align-items: start;
+        }
+
+        .team-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+        }
+
+        .team-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+        }
+
+        .team-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .meta {
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .result {
+            text-align: right;
+            font-size: 14px;
+        }
+
+        .performance {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .dq {
+            color: var(--danger);
+        }
+
+        .chart {
+            display: grid;
+            gap: 12px;
+        }
+
+        .bar-row {
+            display: grid;
+            grid-template-columns: 130px 1fr 52px;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .runner {
+            min-width: 0;
+        }
+
+        .runner-name {
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .runner-leg {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .bar-track {
+            height: 24px;
+            background: var(--bar-bg);
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden;
+            border-left: 1px solid var(--border);
+        }
+
+        .bar {
+            height: 100%;
+            background: var(--bar);
+            border-radius: 0 6px 6px 0;
+        }
+
+        .split {
+            text-align: right;
+            font-size: 13px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        @media (max-width: 520px) {
+            body {
+                padding: 16px;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .bar-row {
+                grid-template-columns: 1fr;
+                gap: 4px;
+            }
+
+            .split {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="page-header">
+        <h1>MUU Relay Results</h1>
+        <p id="status">Loading...</p>
+    </header>
+
+    <main id="relay-container" class="grid"></main>
+
+    <script>
+        const API_URL = "/api/relays?season=2026&series=xcr&round=2&club=MUU";
+
+        function toNumber(value) {
+            const number = Number(value);
+            return Number.isFinite(number) ? number : null;
+        }
+
+        function getAllSplitSeconds(relays) {
+            return relays
+                .flatMap(relay => relay.legs)
+                .map(leg => toNumber(leg.split_seconds))
+                .filter(value => value !== null && value > 0);
+        }
+
+        function getWidthPercent(value, minTime, maxTime) {
+            if (value === null) {
+                return 0;
+            }
+
+            if (maxTime === minTime) {
+                return 100;
+            }
+
+            const normalized = (value - minTime) / (maxTime - minTime);
+
+            // Keep bars visible while still comparable globally.
+            return 12 + normalized * 88;
+        }
+
+        function getDivisionLabel(relay) {
+            if (relay.event_note) {
+                return relay.event_note;
+            }
+
+            if (relay.division) {
+                return `Division ${relay.division}`;
+            }
+
+            if (relay.division_label) {
+                return relay.division_label;
+            }
+
+            return "Unknown division";
+        }
+
+        function renderRelayCard(relay, minTime, maxTime) {
+            const card = document.createElement("article");
+            card.className = "team-card";
+
+            const statusClass = relay.status === "DQ" ? "performance dq" : "performance";
+
+            card.innerHTML = `
+                <div class="team-header">
+                    <div>
+                        <div class="team-title">${relay.team}</div>
+                        <div class="meta">
+                            ${relay.sex} • ${getDivisionLabel(relay)} • ${relay.distance}
+                        </div>
+                    </div>
+                    <div class="result">
+                        <div>Place ${relay.place}</div>
+                        <div class="${statusClass}">${relay.performance}</div>
+                    </div>
+                </div>
+
+                <div class="chart"></div>
+            `;
+
+            const chart = card.querySelector(".chart");
+
+            relay.legs.forEach(leg => {
+                const splitSeconds = toNumber(leg.split_seconds);
+                const width = getWidthPercent(splitSeconds, minTime, maxTime);
+
+                const row = document.createElement("div");
+                row.className = "bar-row";
+
+                row.innerHTML = `
+                    <div class="runner">
+                        <div class="runner-name">${leg.athlete || "Unknown athlete"}</div>
+                        <div class="runner-leg">Leg ${leg.leg_number}</div>
+                    </div>
+
+                    <div class="bar-track">
+                        <div class="bar" style="width: ${width}%"></div>
+                    </div>
+
+                    <div class="split">${leg.split || ""}</div>
+                `;
+
+                chart.appendChild(row);
+            });
+
+            return card;
+        }
+
+        async function loadRelays() {
+            const response = await fetch(API_URL);
+            const data = await response.json();
+
+            const relays = data.relays || [];
+            const allSplits = getAllSplitSeconds(relays);
+
+            const minTime = Math.min(...allSplits);
+            const maxTime = Math.max(...allSplits);
+
+            document.getElementById("status").textContent =
+                `${data.relay_count} relay teams found • bars scaled globally from fastest to slowest leg`;
+
+            const container = document.getElementById("relay-container");
+            container.innerHTML = "";
+
+            relays.forEach(relay => {
+                container.appendChild(renderRelayCard(relay, minTime, maxTime));
+            });
+        }
+
+        loadRelays();
+    </script>
+</body>
+
+</html>

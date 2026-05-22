@@ -7,10 +7,15 @@ from api.services.athlete_service import (
     compare_athletes,
 )
 
+
 from .services.resultshub_client import (
     fetch_event_results,
     
 )
+
+from .services.affiliation_service import fetch_affiliations
+from .services.relay_service import get_relay_results
+
 from .utils import handle_service_call
 
 
@@ -38,6 +43,9 @@ def health(request):
         "service": "athletics-victoria-api",
     })
 
+@api_view(["GET"])
+def affiliations(request):
+    return handle_service_call(fetch_affiliations)
 
 @api_view(["GET"])
 def results(request):
@@ -87,3 +95,26 @@ def compare_athletes_view(request):
         name1=name1,
         name2=name2,
     )
+
+@api_view(["GET"])
+def relays(request):
+    season = request.GET.get("season", "2026")
+    series = request.GET.get("series", "xcr")
+    round_number = request.GET.get("round", "2")
+    venue = request.GET.get("venue", "all")
+    club = request.GET.get("club")
+
+    return handle_service_call(
+        get_relay_results,
+        season=season,
+        series=series,
+        round_number=round_number,
+        venue=venue,
+        club=club,
+    )
+
+from django.shortcuts import render
+
+
+def relays_view(request):
+    return render(request, "api/relays.html")
