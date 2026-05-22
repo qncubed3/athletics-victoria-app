@@ -145,7 +145,70 @@ Example response shape:
     }
   ]
 }
+
+
 ```
+## Relay Results
+```
+GET /api/relays?season=<season>&series=<series>&round=<round>&club=<club>
+```
+Example request:
+```
+/api/relays?season=2026&series=xcr&round=2&club=MUU
+```
+Example response shape:
+```
+{
+  "team": "MUU M1.6",
+  "performance": "2:00:00",
+  "place": "6",
+  "legs": [
+    {
+      "leg_number": 1,
+      "athlete": "First Last",
+      "split": "20:00",
+      "split_seconds": "1200"
+    }
+  ]
+}
+```
+
+# Relay Results Processing
+Relay events in the upstream ResultHub feed are represented differently from standard individual race results.
+
+Rather than storing each athlete leg as a separate structured record, relay teams are encoded into compact pipe-delimited (`|`) and double-caret-delimited (`^^`) string fields embedded inside result rows.
+
+Example upstream fields:
+
+```
+RelayMembers
+RelaySplits
+```
+These fields contain packed relay leg information such as:
+
+- athlete IDs
+- bib numbers
+- athlete names
+- leg order
+- split times
+
+The fields are:
+```
+athlete_id | member_flag | bib | first_name | last_name | seq_id
+```
+```
+split_flag | split_display | split_seconds
+```
+
+Example raw structure:
+```
+100001|M|1000|First|Last|1^^100002|M||First|Last|2
+```
+```
+1|25:00|1500^^1|26:00|1560
+```
+The API normalizes these structures into analytics-ready JSON objects.
+
 # Planned API Design
 The long-term goal is to expose normalized entity-based endpoints instead such as:
 ```
@@ -180,6 +243,7 @@ relay legs
 clubs
 venues
 ```
+
 ## Historical Storage
 Move from live-fetch architecture to persistent storage.
 
