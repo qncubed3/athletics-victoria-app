@@ -9,17 +9,25 @@ This project converts a legacy Results Hub data feed into a structured, queryabl
 
 Athletics Victoria race results are hosted through ResultHub.
 
-The underlying ResultHub endpoint is:
+The underlying ResultHub endpoints found were:
 
 ```
 https://athsvic.resultshub.com.au/php/resultsFileFetch.php
 ```
-
 with query parameters such as:
 ```
 ?season=2026&series=xcr&round=1&venue=all
 ```
-However, this endpoint is not a standard REST API.
+and
+```
+https://athsvic.resultshub.com.au/php/db/fetch_athResults.php
+```
+with query parameters such as:
+```
+?athleteName=LastName,FirstName
+```
+
+However, these endpoints are not a standard REST APIs.
 
 Instead of returning normal JSON like:
 
@@ -34,6 +42,18 @@ it returns JavaScript-style variable assignments:
 Signature_AlbertPark = [...];
 sessions_AlbertPark = [...];
 athletes_AlbertPark = [...];
+```
+or a HTML webpage with structured tabls containing fields
+```
+<tr>
+  <th>Meet Date</th>
+  <th>Event</th>
+  <th>&nbsp;</th>
+  <th style="text-align:right">Perf</th>
+  <th>&nbsp;</th>
+  <th>Venue</th>
+  <!--<tr-->
+</tr>
 ```
 
 This suggests the endpoint was originally designed as an internal frontend data feed for the ResultHub website rather than as a public developer API.

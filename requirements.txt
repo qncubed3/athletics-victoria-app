@@ -1,4 +1,6 @@
 Django
 djangorestframework
 requests
+certifi
 beautifulsoup4
+django-cors-headers
