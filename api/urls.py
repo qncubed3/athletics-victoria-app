@@ -6,7 +6,10 @@ urlpatterns = [
     path("results", views.results),
     path("athletes/results", views.athlete_results),
     path("athletes/compare", views.compare_athletes_view),
+    path("athletes", views.athletes),
     path("affiliations", views.affiliations),
     path("relays", views.relays),
     path("relays/view", views.relays_view),
+    path("events", views.events),
+    path("news", views.news),
 ]

@@ -1,0 +1,92 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --accent: #1e3a5f;
+  --accent-soft: rgba(30, 58, 95, 0.12);
+  --accent-hover: #163049;
+  --bg-shell: #e8eaed;
+  --bg-panel: #ffffff;
+  --bg-subtle: #fafafa;
+  --bg-muted: #f3f4f6;
+  --bg-input: #fafafa;
+  --bg-hover: #f3f4f6;
+  --text-primary: #111827;
+  --text-secondary: #374151;
+  --text-muted: #6b7280;
+  --text-faint: #9ca3af;
+  --border: #e5e7eb;
+  --border-subtle: #f3f4f6;
+  --shadow-panel: 0 4px 24px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+  --shadow-dropdown: 0 8px 24px rgba(15, 23, 42, 0.1);
+  --shadow-pill: 0 1px 3px rgba(15, 23, 42, 0.05);
+  --sidebar-active-bg: #1e3a5f;
+  --sidebar-active-text: #ffffff;
+  --sidebar-icon-bg: rgba(255, 255, 255, 0.45);
+  --sidebar-icon-hover: rgba(255, 255, 255, 0.55);
+  --sidebar-toggle-bg: rgba(255, 255, 255, 0.55);
+  --sidebar-toggle-hover: rgba(255, 255, 255, 0.85);
+  --error-bg: #fef2f2;
+  --error-text: #dc2626;
+  --filter-icon-bg: rgba(30, 58, 95, 0.08);
+}
+
+[data-theme='dark'] {
+  --accent: #3b82f6;
+  --accent-soft: rgba(59, 130, 246, 0.18);
+  --accent-hover: #60a5fa;
+  --bg-shell: #0f1419;
+  --bg-panel: #1a2332;
+  --bg-subtle: #243044;
+  --bg-muted: #1e293b;
+  --bg-input: #243044;
+  --bg-hover: #2d3a4f;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-faint: #64748b;
+  --border: #334155;
+  --border-subtle: #2d3a4f;
+  --shadow-panel: 0 4px 24px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-dropdown: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-pill: 0 1px 3px rgba(0, 0, 0, 0.25);
+  --sidebar-active-bg: #3b82f6;
+  --sidebar-active-text: #ffffff;
+  --sidebar-icon-bg: rgba(255, 255, 255, 0.06);
+  --sidebar-icon-hover: rgba(255, 255, 255, 0.1);
+  --sidebar-toggle-bg: rgba(255, 255, 255, 0.08);
+  --sidebar-toggle-hover: rgba(255, 255, 255, 0.14);
+  --error-bg: rgba(220, 38, 38, 0.15);
+  --error-text: #fca5a5;
+  --filter-icon-bg: rgba(59, 130, 246, 0.15);
+}
+
+html {
+  color-scheme: light;
+}
+
+body,
+#root {
+  min-height: 100dvh;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: var(--bg-shell);
+  color: var(--text-primary);
+  transition: background 0.2s ease, color 0.2s ease;
+  overflow-x: hidden;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+button {
+  font-family: inherit;
+}

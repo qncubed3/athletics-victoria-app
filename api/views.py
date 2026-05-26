@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from api.services.athlete_service import (
     fetch_athlete_results,
     compare_athletes,
+    fetch_athletes,
 )
 
 
@@ -15,6 +16,7 @@ from .services.resultshub_client import (
 
 from .services.affiliation_service import fetch_affiliations
 from .services.relay_service import get_relay_results
+from .services.event_service import fetch_events, fetch_news
 
 from .utils import handle_service_call
 
@@ -46,6 +48,12 @@ def health(request):
 @api_view(["GET"])
 def affiliations(request):
     return handle_service_call(fetch_affiliations)
+
+
+@api_view(["GET"])
+def athletes(request):
+    return handle_service_call(fetch_athletes)
+
 
 @api_view(["GET"])
 def results(request):
@@ -111,6 +119,26 @@ def relays(request):
         round_number=round_number,
         venue=venue,
         club=club,
+    )
+
+@api_view(["GET"])
+def events(request):
+    season = request.GET.get("season", "2026")
+
+    return handle_service_call(
+        fetch_events,
+        season=season,
+    )
+
+@api_view(["GET"])
+def news(request):
+    season = request.GET.get("season", "2026")
+    series = request.GET.get("series")
+
+    return handle_service_call(
+        fetch_news,
+        season=season,
+        series=series,
     )
 
 from django.shortcuts import render

@@ -1,5 +1,21 @@
 from api.services.resultshub_client import fetch_resultshub_data
-from api.services.resultshub_parsers import parse_athlete_results_html
+from api.services.resultshub_parsers import parse_athlete_results_html, parse_js_arrays
+
+
+def fetch_athletes():
+    raw = fetch_resultshub_data(
+        "db/select_athletes.php",
+        {},
+    )
+
+    tables = parse_js_arrays(raw["raw_text"])
+    athletes = tables.get("athletes", [])
+
+    return {
+        "source_url": raw["source_url"],
+        "athlete_count": len(athletes),
+        "athletes": athletes,
+    }
 
 
 def fetch_athlete_results(name):
