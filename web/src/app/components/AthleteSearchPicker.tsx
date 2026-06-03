@@ -5,13 +5,16 @@ import { useAthletesRegistry } from '@/context/AthletesRegistryContext'
 import type { AthleteSuggestion } from '@/types/athlete'
 import { filterIndex } from '@/utils/athleteSearch'
 
-interface AthleteSearchPickerProps {
+type AthleteSearchPickerProps = {
   id: string
   label: string
   selected: AthleteSuggestion | null
   onSelect: (athlete: AthleteSuggestion) => void
   onClear: () => void
+  // hide the other athlete in 1v1 so you cannot pick the same person twice
   excludeApiName?: string | null
+  // athletes page shows loading status and registry count under the input
+  showRegistryHints?: boolean
 }
 
 export function AthleteSearchPicker({
@@ -21,8 +24,9 @@ export function AthleteSearchPicker({
   onSelect,
   onClear,
   excludeApiName,
+  showRegistryHints = false,
 }: AthleteSearchPickerProps) {
-  const { index, ready, loading } = useAthletesRegistry()
+  const { index, ready, loading, error: loadError } = useAthletesRegistry()
   const [query, setQuery] = useState(selected?.displayName ?? '')
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -80,6 +84,18 @@ export function AthleteSearchPicker({
         autoComplete="off"
         disabled={!ready && loading}
       />
+
+      {showRegistryHints && loading && !ready && (
+        <p className="athletes-search__hint">Loading athlete registry in background…</p>
+      )}
+      {showRegistryHints && loadError && (
+        <p className="athletes-search__error">{loadError}</p>
+      )}
+      {showRegistryHints && ready && (
+        <p className="athletes-search__hint">
+          {index.length.toLocaleString()} athletes ready
+        </p>
+      )}
 
       {open && !ready && query.trim().length >= 2 && (
         <p className="athletes-suggestions__empty">Registry still loading…</p>

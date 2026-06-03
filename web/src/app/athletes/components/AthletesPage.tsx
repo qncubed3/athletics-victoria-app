@@ -1,14 +1,13 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { fetchAthleteResults } from '@/api/client'
-import { useAthletesRegistry } from '@/context/AthletesRegistryContext'
 import type {
   AthleteResultRow,
   AthleteResultsResponse,
   AthleteSuggestion,
 } from '@/types/athlete'
-import { filterIndex } from '@/utils/athleteSearch'
+import { AthleteSearchPicker } from '@/app/components/AthleteSearchPicker'
 import { AthleteActivityView } from './AthleteActivityView'
 import { AthleteRecordsView } from './AthleteRecordsView'
 import { AthleteResultsView, type ResultFilters } from './AthleteResultsView'
@@ -49,23 +48,12 @@ function filterResults(rows: AthleteResultRow[], filters: ResultFilters) {
 }
 
 export function AthletesPage() {
-  const { index, ready, loading, error: loadError } = useAthletesRegistry()
-  const [query, setQuery] = useState('')
-  const [suggestionsOpen, setSuggestionsOpen] = useState(false)
-
   const [selected, setSelected] = useState<AthleteSuggestion | null>(null)
   const [results, setResults] = useState<AthleteResultsResponse | null>(null)
   const [resultsLoading, setResultsLoading] = useState(false)
   const [resultsError, setResultsError] = useState<string | null>(null)
   const [filters, setFilters] = useState<ResultFilters>(EMPTY_FILTERS)
   const [activeTab, setActiveTab] = useState<AthleteTab>('results')
-
-  const searchRef = useRef<HTMLDivElement>(null)
-
-  const suggestions = useMemo(
-    () => (ready ? filterIndex(index, query) : []),
-    [index, query, ready]
-  )
 
   const filterOptions = useMemo(() => {
     if (!results) return { years: [], events: [], venues: [] }
@@ -84,8 +72,6 @@ export function AthletesPage() {
 
   const selectAthlete = useCallback(async (athlete: AthleteSuggestion) => {
     setSelected(athlete)
-    setQuery(athlete.displayName)
-    setSuggestionsOpen(false)
     setResultsLoading(true)
     setResultsError(null)
     setResults(null)
@@ -103,80 +89,23 @@ export function AthletesPage() {
     }
   }, [])
 
-  useEffect(() => {
-    function onDocClick(e: MouseEvent) {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setSuggestionsOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', onDocClick)
-    return () => document.removeEventListener('mousedown', onDocClick)
-  }, [])
+  function clearSearch() {
+    setSelected(null)
+    setResults(null)
+    setFilters(EMPTY_FILTERS)
+    setActiveTab('results')
+  }
 
   return (
     <div className="athletes-page">
-      <div className="athletes-search" ref={searchRef}>
-        <label className="athletes-search__label" htmlFor="athlete-search">
-          Search athletes
-        </label>
-        <input
-          id="athlete-search"
-          type="search"
-          className="athletes-search__input"
-          placeholder={
-            ready ? 'Search by first or last name' : 'Registry loading…'
-          }
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value)
-            setSuggestionsOpen(true)
-            setSelected(null)
-            setResults(null)
-            setFilters(EMPTY_FILTERS)
-            setActiveTab('results')
-          }}
-          onFocus={() => setSuggestionsOpen(true)}
-          autoComplete="off"
-        />
-
-        {loading && !ready && (
-          <p className="athletes-search__hint">Loading athlete registry in background…</p>
-        )}
-        {loadError && <p className="athletes-search__error">{loadError}</p>}
-        {ready && (
-          <p className="athletes-search__hint">
-            {index.length.toLocaleString()} athletes ready
-          </p>
-        )}
-
-        {suggestionsOpen && !ready && query.trim().length >= 2 && (
-          <p className="athletes-suggestions__empty">Registry still loading…</p>
-        )}
-
-        {suggestionsOpen && ready && suggestions.length > 0 && (
-          <ul className="athletes-suggestions" role="listbox">
-            {suggestions.map((s) => (
-              <li key={s.id} role="option">
-                <button
-                  type="button"
-                  className="athletes-suggestions__item"
-                  onClick={() => selectAthlete(s)}
-                >
-                  <span className="athletes-suggestions__name">{s.displayName}</span>
-                  <span className="athletes-suggestions__club">{s.club}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {suggestionsOpen &&
-          ready &&
-          query.trim().length >= 2 &&
-          suggestions.length === 0 && (
-            <p className="athletes-suggestions__empty">No matching athletes</p>
-          )}
-      </div>
+      <AthleteSearchPicker
+        id="athlete-search"
+        label="Search athletes"
+        selected={selected}
+        onSelect={selectAthlete}
+        onClear={clearSearch}
+        showRegistryHints
+      />
 
       {resultsLoading && <div className="athletes-status">Loading results…</div>}
 

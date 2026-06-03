@@ -1175,7 +1175,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding-bottom: 24px;
+  padding: 28px 36px 36px;
 }
 
 .venues-page {
@@ -1521,6 +1521,21 @@
   font-size: 0.875rem;
   color: var(--text-secondary);
   line-height: 1.45;
+}
+
+.venues-panel__maps-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.venues-panel__maps-link:hover {
+  text-decoration: underline;
 }
 
 .venues-panel__meta {

@@ -68,6 +68,14 @@ export function buildVenueMap(
   return { mapped, unmappedMeets }
 }
 
+// link that opens the venue in google maps
+export function googleMapsVenueUrl(venue: Pick<ParsedVenue, 'lat' | 'lng' | 'name' | 'address'>) {
+  const query = venue.address
+    ? `${venue.name}, ${venue.address}`
+    : `${venue.lat},${venue.lng}`
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
+}
+
 export function mapBounds(venues: ParsedVenue[]): [[number, number], [number, number]] | null {
   if (venues.length === 0) return null
   let minLat = Infinity

@@ -8,12 +8,13 @@ import {
   Building2,
   CalendarDays,
   Layers,
+  ExternalLink,
   Menu,
   X,
 } from 'lucide-react'
 import { DEFAULT_SEASON, useFilteredMeets, useSeasonEvents } from '@/hooks/useSeasonEvents'
 import type { VenueFilters } from '@/types/events'
-import { buildVenueMap } from '@/utils/venueMap'
+import { buildVenueMap, googleMapsVenueUrl } from '@/utils/venueMap'
 import { FilterPill } from '@/app/components/FilterPill'
 
 const VenueMap = dynamic(
@@ -230,6 +231,15 @@ export function VenuesPage() {
                     {selectedVenue.meetCount === 1 ? '' : 's'} ·{' '}
                     {selectedVenue.type === 'outOfStad' ? 'Out of stadium' : 'Stadium'}
                   </p>
+                  <a
+                    href={googleMapsVenueUrl(selectedVenue)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="venues-panel__maps-link"
+                  >
+                    <ExternalLink size={14} strokeWidth={2} aria-hidden />
+                    Open in Google Maps
+                  </a>
                 </div>
               </div>
               <div className="venues-map-drawer__body">
