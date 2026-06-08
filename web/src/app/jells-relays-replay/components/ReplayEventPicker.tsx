@@ -48,7 +48,7 @@ export function ReplayEventPicker({
   }
 
   return (
-    <div className="w-fit">
+    <div className="relative z-[1003] w-fit">
       <FilterPill
         icon={Flag}
         value={value}

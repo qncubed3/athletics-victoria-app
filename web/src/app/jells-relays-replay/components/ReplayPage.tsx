@@ -80,7 +80,7 @@ export function ReplayPage({ course }: { course: CourseTrack }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
 
-      {/* event picker */}
+      {/* event picker — z above sidebar (1001) and hamburger (1002) when dropdown opens */}
       <ReplayEventPicker events={events} value={eventPtr} onChange={setEventPtr} />
 
       {/* debug panels */}
