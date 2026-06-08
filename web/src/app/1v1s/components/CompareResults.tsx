@@ -18,11 +18,13 @@ export function CompareResults({
   const name2 = athlete2Label || formatApiName(compare.athlete2)
 
   return (
-    <section className="compare-results">
+    <section className="flex flex-col gap-4">
       <CompareSummaryBar athlete1Label={name1} athlete2Label={name2} data={compare} />
 
       {compare.overlap_count === 0 ? (
-        <p className="athletes-status">No overlapping results for these athletes.</p>
+        <p className="rounded-xl bg-[var(--bg-subtle)] px-5 py-4 text-[0.95rem] text-[var(--text-muted)]">
+          No overlapping results for these athletes.
+        </p>
       ) : (
         <CompareTable rows={compare.comparisons} athlete1Label={name1} athlete2Label={name2} />
       )}

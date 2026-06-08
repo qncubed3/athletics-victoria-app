@@ -19,7 +19,7 @@ export function CompareSearchRow({
   onClearAthlete2,
 }: CompareSearchRowProps) {
   return (
-    <div className="compare-search-row">
+    <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-x-5 gap-y-4 max-[720px]:grid-cols-1 [&>div]:max-w-none">
       <AthleteSearchPicker
         id="compare-athlete-1"
         label="Athlete 1"
@@ -28,7 +28,10 @@ export function CompareSearchRow({
         onClear={onClearAthlete1}
         excludeApiName={athlete2?.apiName}
       />
-      <span className="compare-search-row__vs" aria-hidden>
+      <span
+        className="pb-3.5 text-[0.95rem] font-bold tracking-wider text-[var(--text-muted)] uppercase max-[720px]:pb-0 max-[720px]:text-center"
+        aria-hidden
+      >
         vs
       </span>
       <AthleteSearchPicker

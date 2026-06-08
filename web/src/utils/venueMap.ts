@@ -68,6 +68,14 @@ export function buildVenueMap(
   return { mapped, unmappedMeets }
 }
 
+// human-readable venue type from ResultsHub code
+export function venueTypeLabel(type: string) {
+  if (type === 'outOfStad') {
+    return 'Out of stadium'
+  }
+  return 'Stadium'
+}
+
 // link that opens the venue in google maps
 export function googleMapsVenueUrl(venue: Pick<ParsedVenue, 'lat' | 'lng' | 'name' | 'address'>) {
   const query = venue.address

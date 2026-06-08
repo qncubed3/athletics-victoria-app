@@ -1,22 +1,17 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
-import {
-  Activity,
-  ArrowLeft,
-  Building2,
-  CalendarDays,
-  Layers,
-  ExternalLink,
-  Menu,
-  X,
-} from 'lucide-react'
+import { Activity, Building2, CalendarDays, Layers, Menu } from 'lucide-react'
 import { DEFAULT_SEASON, useFilteredMeets, useSeasonEvents } from '@/hooks/useSeasonEvents'
-import type { VenueFilters } from '@/types/events'
-import { buildVenueMap, googleMapsVenueUrl } from '@/utils/venueMap'
+import type { ParsedVenue, VenueFilters } from '@/types/events'
+import { buildVenueMap } from '@/utils/venueMap'
 import { FilterPill } from '@/app/components/FilterPill'
+import { cn } from '@/lib/cn'
+import { VenueDrawerDetail } from './VenueDrawerDetail'
+import { VenueDrawerList } from './VenueDrawerList'
 
+// Leaflet needs the browser so load the map only on the client
 const VenueMap = dynamic(
   () => import('./VenueMap').then((mod) => mod.VenueMap),
   { ssr: false }
@@ -29,12 +24,13 @@ const EMPTY_FILTERS: VenueFilters = {
   venueType: 'all',
 }
 
+type DrawerView = 'list' | 'detail'
+
 export function VenuesPage() {
   const [filters, setFilters] = useState<VenueFilters>(EMPTY_FILTERS)
   const [selectedCode, setSelectedCode] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
-  // true = scrollable venue list, false = selected venue meets
-  const [drawerListMode, setDrawerListMode] = useState(true)
+  const [drawerView, setDrawerView] = useState<DrawerView>('list')
 
   const {
     data,
@@ -49,34 +45,39 @@ export function VenuesPage() {
 
   const filteredMeets = useFilteredMeets(allMeets, filters)
 
-  const { mapped: venues, unmappedMeets } = useMemo(
-    () => buildVenueMap(data?.tables.season_venues ?? [], filteredMeets, filters.venueType),
-    [data, filteredMeets, filters.venueType]
+  const seasonVenues = data?.tables.season_venues ?? []
+  const { mapped: venues, unmappedMeets } = buildVenueMap(
+    seasonVenues,
+    filteredMeets,
+    filters.venueType
   )
 
-  const selectedVenue = useMemo(
-    () => venues.find((v) => v.code === selectedCode) ?? null,
-    [venues, selectedCode]
-  )
+  let selectedVenue: ParsedVenue | null = null
+  if (selectedCode) {
+    selectedVenue = venues.find((v) => v.code === selectedCode) ?? null
+  }
 
+  // if filters change and the selected venue drops off the map, clear selection
   useEffect(() => {
-    if (selectedCode && !venues.some((v) => v.code === selectedCode)) {
+    if (!selectedCode) {
+      return
+    }
+    const stillOnMap = venues.some((v) => v.code === selectedCode)
+    if (!stillOnMap) {
       setSelectedCode(null)
-      setDrawerListMode(true)
+      setDrawerView('list')
     }
   }, [venues, selectedCode])
 
-  // Open drawer on map and show meets for that venue
   function selectVenue(code: string) {
     setSelectedCode(code)
     setDrawerOpen(true)
-    setDrawerListMode(false)
+    setDrawerView('detail')
   }
 
-  // Hamburger opens the venue list
   function openVenueList() {
     setDrawerOpen(true)
-    setDrawerListMode(true)
+    setDrawerView('list')
   }
 
   function closeDrawer() {
@@ -92,21 +93,61 @@ export function VenuesPage() {
   }
 
   function backToVenueList() {
-    setDrawerListMode(true)
+    setDrawerView('list')
+  }
+
+  // pick which drawer panel to show
+  let drawerContent
+  if (drawerView === 'list') {
+    drawerContent = (
+      <VenueDrawerList
+        venues={venues}
+        unmappedMeets={unmappedMeets}
+        selectedCode={selectedCode}
+        onSelectVenue={selectVenue}
+        onClose={closeDrawer}
+      />
+    )
+  } else if (selectedVenue) {
+    drawerContent = (
+      <VenueDrawerDetail
+        venue={selectedVenue}
+        onBack={backToVenueList}
+        onClose={closeDrawer}
+      />
+    )
+  } else {
+    drawerContent = (
+      <div className="flex h-full min-h-0 w-[min(340px,36vw)] flex-col max-sm:w-[min(300px,78vw)]">
+        <div className="min-h-0 flex-1 overflow-y-auto p-4">
+          <p className="m-0 text-[0.9rem] text-[var(--text-muted)]">
+            Select a venue from the list or map
+          </p>
+        </div>
+      </div>
+    )
   }
 
   if (loading && !data) {
-    return <p className="athletes-status">Loading venues…</p>
+    return (
+      <p className="rounded-xl bg-[var(--bg-subtle)] px-5 py-4 text-[0.95rem] text-[var(--text-muted)]">
+        Loading venues…
+      </p>
+    )
   }
 
   if (error && !data) {
-    return <div className="athletes-status athletes-status--error">{error}</div>
+    return (
+      <div className="rounded-xl bg-[var(--error-bg)] px-5 py-4 text-[0.95rem] text-[var(--error-text)]">
+        {error}
+      </div>
+    )
   }
 
   return (
-    <div className="venues-page">
-      <div className="venues-page__toolbar">
-        <div className="athletes-filters">
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
+      <div className="shrink-0">
+        <div className="mb-2 flex flex-wrap items-center gap-2.5 max-sm:flex-col max-sm:items-start max-sm:gap-3">
           <FilterPill
             icon={CalendarDays}
             ariaLabel="Filter by season"
@@ -120,156 +161,47 @@ export function VenuesPage() {
             icon={Layers}
             ariaLabel="Filter by series"
             value={filters.series}
-            onChange={(series) => setFilters((f) => ({ ...f, series }))}
+            onChange={(series) => setFilters({ ...filters, series })}
             options={seriesOptions}
           />
           <FilterPill
             icon={Activity}
             ariaLabel="Filter by status"
             value={filters.status}
-            onChange={(status) => setFilters((f) => ({ ...f, status }))}
+            onChange={(status) => setFilters({ ...filters, status })}
             options={statusOptions}
           />
           <FilterPill
             icon={Building2}
             ariaLabel="Filter by venue type"
             value={filters.venueType}
-            onChange={(venueType) => setFilters((f) => ({ ...f, venueType }))}
+            onChange={(venueType) => setFilters({ ...filters, venueType })}
             options={venueTypeOptions}
           />
         </div>
-        <p className="athletes-filters__count venues-page__count">
+        <p className="m-0 mt-1 text-[0.85rem] text-[var(--text-faint)]">
           {venues.length} venues · {filteredMeets.length} meets
           {loading ? ' · refreshing…' : ''}
         </p>
       </div>
 
-      <div className="venues-map-stage">
+      <div className="flex min-h-0 flex-1 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-subtle)]">
         <aside
-          className={`venues-map-drawer ${drawerOpen ? 'venues-map-drawer--open' : ''}`}
+          className={cn(
+            'pointer-events-none h-full shrink-0 overflow-hidden border-r-0 bg-[var(--bg-panel)] transition-[width] duration-[250ms] ease-in-out w-0',
+            drawerOpen &&
+              'pointer-events-auto w-[min(340px,36vw)] border-r border-[var(--border)] max-sm:w-[min(300px,78vw)]'
+          )}
           aria-hidden={!drawerOpen}
         >
-          {drawerListMode ? (
-            <div className="venues-map-drawer__inner">
-              <header className="venues-map-drawer__header">
-                <div className="venues-map-drawer__header-row">
-                  <div>
-                    <h3>Venues</h3>
-                    <p>{venues.length} locations</p>
-                  </div>
-                  <button
-                    type="button"
-                    className="venues-map-drawer__close"
-                    aria-label="Close venue list"
-                    onClick={closeDrawer}
-                  >
-                    <X size={20} strokeWidth={2} />
-                  </button>
-                </div>
-              </header>
-              <div className="venues-map-drawer__body">
-                <ul className="venues-map-drawer__list">
-                  {venues.map((v) => (
-                    <li key={v.code}>
-                      <button
-                        type="button"
-                        className={
-                          selectedCode === v.code
-                            ? 'venues-map-drawer__list-btn venues-map-drawer__list-btn--active'
-                            : 'venues-map-drawer__list-btn'
-                        }
-                        onClick={() => selectVenue(v.code)}
-                      >
-                        <span className="venues-map-drawer__list-name">{v.name}</span>
-                        <span className="venues-map-drawer__list-count">{v.meetCount}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-                {unmappedMeets.length > 0 && (
-                  <div className="venues-panel__unmapped">
-                    <h4>Meets without map coordinates</h4>
-                    <ul>
-                      {unmappedMeets.map((meet) => (
-                        <li key={`${meet.date}-${meet.series}-${meet.desc}`}>
-                          <strong>{meet.venue}</strong> — {meet.desc} ({meet.dateLabel})
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : selectedVenue ? (
-            <div className="venues-map-drawer__inner">
-              <div className="venues-map-drawer__header venues-map-drawer__header--detail">
-                <div className="venues-map-drawer__header-row">
-                  <button
-                    type="button"
-                    className="venues-map-drawer__back"
-                    onClick={backToVenueList}
-                  >
-                    <ArrowLeft size={18} strokeWidth={2} aria-hidden />
-                    All venues
-                  </button>
-                  <button
-                    type="button"
-                    className="venues-map-drawer__close"
-                    aria-label="Close"
-                    onClick={closeDrawer}
-                  >
-                    <X size={20} strokeWidth={2} />
-                  </button>
-                </div>
-                <div className="venues-panel__header">
-                  <h3>{selectedVenue.name}</h3>
-                  {selectedVenue.address && (
-                    <p className="venues-panel__address">{selectedVenue.address}</p>
-                  )}
-                  <p className="venues-panel__meta">
-                    {selectedVenue.meetCount} meet
-                    {selectedVenue.meetCount === 1 ? '' : 's'} ·{' '}
-                    {selectedVenue.type === 'outOfStad' ? 'Out of stadium' : 'Stadium'}
-                  </p>
-                  <a
-                    href={googleMapsVenueUrl(selectedVenue)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="venues-panel__maps-link"
-                  >
-                    <ExternalLink size={14} strokeWidth={2} aria-hidden />
-                    Open in Google Maps
-                  </a>
-                </div>
-              </div>
-              <div className="venues-map-drawer__body">
-                <ul className="venues-panel__meets">
-                  {selectedVenue.meets.map((meet) => (
-                    <li key={`${meet.date}-${meet.series}-${meet.round}-${meet.desc}`}>
-                      <span className="venues-panel__meet-date">{meet.dateLabel}</span>
-                      <span className="venues-panel__meet-title">{meet.desc}</span>
-                      <span className="venues-panel__meet-meta">
-                        {meet.seriesLabel} · Round {meet.round} · {meet.stat}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          ) : (
-            <div className="venues-map-drawer__inner">
-              <div className="venues-map-drawer__body">
-                <p className="venues-map-drawer__hint">Select a venue from the list or map</p>
-              </div>
-            </div>
-          )}
+          {drawerContent}
         </aside>
 
-        <div className="venues-map-pane">
+        <div className="relative min-h-0 min-w-0 flex-1">
           {!drawerOpen && (
             <button
               type="button"
-              className="venues-map-menu"
+              className="absolute top-3 left-3 z-[1001] flex h-11 w-11 cursor-pointer items-center justify-center rounded-[10px] border-0 bg-[var(--bg-panel)] text-[var(--text-primary)] shadow-[0_2px_10px_rgba(0,0,0,0.18)] transition-colors hover:bg-[var(--bg-subtle)]"
               aria-label="Open venue list"
               onClick={toggleDrawer}
             >

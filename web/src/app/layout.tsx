@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import { AppShell } from './components/AppShell'
-import '../index.css'
+import '../styles/globals.css'
 
 export const metadata: Metadata = {
   title: 'AthsVic Insights',

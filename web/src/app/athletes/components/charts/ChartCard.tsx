@@ -1,6 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import { cn } from '@/lib/cn'
 
 interface ChartCardProps {
   title: string
@@ -20,13 +21,20 @@ export function ChartCard({
   children,
 }: ChartCardProps) {
   return (
-    <div className={`chart-card ${wide ? 'chart-card--wide' : ''}`}>
-      <h4 className="chart-card__title">{title}</h4>
+    <div
+      className={cn(
+        'rounded-2xl border border-[var(--border)] bg-[var(--bg-subtle)] p-5',
+        wide && 'w-full'
+      )}
+    >
+      <h4 className="m-0 mb-4 text-[0.9rem] font-semibold text-[var(--text-secondary)]">
+        {title}
+      </h4>
       {empty ? (
-        <p className="chart-card__empty">{emptyMessage}</p>
+        <p className="m-0 text-[0.875rem] text-[var(--text-faint)]">{emptyMessage}</p>
       ) : (
         <div
-          className="chart-card__body"
+          className="w-full"
           style={height === 'auto' ? undefined : { height }}
         >
           {children}

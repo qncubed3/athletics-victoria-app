@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAthletesRegistry } from '@/context/AthletesRegistryContext'
 import type { AthleteSuggestion } from '@/types/athlete'
+import { cn } from '@/lib/cn'
 import { filterIndex } from '@/utils/athleteSearch'
 
 type AthleteSearchPickerProps = {
@@ -11,11 +12,12 @@ type AthleteSearchPickerProps = {
   selected: AthleteSuggestion | null
   onSelect: (athlete: AthleteSuggestion) => void
   onClear: () => void
-  // hide the other athlete in 1v1 so you cannot pick the same person twice
   excludeApiName?: string | null
-  // athletes page shows loading status and registry count under the input
   showRegistryHints?: boolean
 }
+
+const dropdownClass =
+  'absolute top-[calc(100%-4px)] right-0 left-0 z-10 rounded-xl border border-[var(--border)] bg-[var(--bg-panel)] shadow-[var(--shadow-dropdown)]'
 
 export function AthleteSearchPicker({
   id,
@@ -69,14 +71,17 @@ export function AthleteSearchPicker({
   }
 
   return (
-    <div className="athletes-search" ref={rootRef}>
-      <label className="athletes-search__label" htmlFor={id}>
+    <div className="relative max-w-[480px]" ref={rootRef}>
+      <label
+        className="mb-2 block text-[0.85rem] font-semibold text-[var(--text-secondary)]"
+        htmlFor={id}
+      >
         {label}
       </label>
       <input
         id={id}
         type="search"
-        className="athletes-search__input"
+        className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-input)] px-4 py-3 text-base text-[var(--text-primary)] transition-[border-color,box-shadow,background] focus:border-[var(--accent)] focus:bg-[var(--bg-panel)] focus:shadow-[0_0_0_3px_var(--accent-soft)] focus:outline-none disabled:cursor-wait disabled:opacity-60"
         placeholder={ready ? 'Search by first or last name' : 'Registry loading…'}
         value={query}
         onChange={(e) => onInputChange(e.target.value)}
@@ -86,32 +91,41 @@ export function AthleteSearchPicker({
       />
 
       {showRegistryHints && loading && !ready && (
-        <p className="athletes-search__hint">Loading athlete registry in background…</p>
+        <p className="mt-2 text-[0.8rem] text-[var(--text-faint)]">
+          Loading athlete registry in background…
+        </p>
       )}
       {showRegistryHints && loadError && (
-        <p className="athletes-search__error">{loadError}</p>
+        <p className="mt-2 text-[0.85rem] text-[var(--error-text)]">{loadError}</p>
       )}
       {showRegistryHints && ready && (
-        <p className="athletes-search__hint">
+        <p className="mt-2 text-[0.8rem] text-[var(--text-faint)]">
           {index.length.toLocaleString()} athletes ready
         </p>
       )}
 
       {open && !ready && query.trim().length >= 2 && (
-        <p className="athletes-suggestions__empty">Registry still loading…</p>
+        <p className={cn(`${dropdownClass} m-0 px-4 py-3 text-[0.9rem] text-[var(--text-faint)]`)}>
+          Registry still loading…
+        </p>
       )}
 
       {open && ready && suggestions.length > 0 && (
-        <ul className="athletes-suggestions" role="listbox">
+        <ul
+          className={`${dropdownClass} m-0 max-h-80 list-none overflow-y-auto p-1.5`}
+          role="listbox"
+        >
           {suggestions.map((s) => (
             <li key={s.id} role="option">
               <button
                 type="button"
-                className="athletes-suggestions__item"
+                className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border-0 bg-transparent px-3 py-2.5 text-left transition-colors hover:bg-[var(--bg-hover)]"
                 onClick={() => pick(s)}
               >
-                <span className="athletes-suggestions__name">{s.displayName}</span>
-                <span className="athletes-suggestions__club">{s.club}</span>
+                <span className="font-medium text-[var(--text-primary)]">{s.displayName}</span>
+                <span className="rounded-md bg-[var(--bg-muted)] px-2 py-0.5 text-[0.8rem] font-semibold text-[var(--text-muted)]">
+                  {s.club}
+                </span>
               </button>
             </li>
           ))}
@@ -119,7 +133,9 @@ export function AthleteSearchPicker({
       )}
 
       {open && ready && query.trim().length >= 2 && suggestions.length === 0 && (
-        <p className="athletes-suggestions__empty">No matching athletes</p>
+        <p className={cn(`${dropdownClass} m-0 px-4 py-3 text-[0.9rem] text-[var(--text-faint)]`)}>
+          No matching athletes
+        </p>
       )}
     </div>
   )

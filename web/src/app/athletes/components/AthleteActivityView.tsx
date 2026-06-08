@@ -1,6 +1,5 @@
 'use client'
 
-import { useMemo } from 'react'
 import type { AthleteResultRow } from '@/types/athlete'
 import {
   activitySummary,
@@ -11,49 +10,50 @@ import {
 import { CountBarChart } from './charts/CountBarChart'
 import { YearLineChart } from './charts/YearLineChart'
 
-interface AthleteActivityViewProps {
-  rows: AthleteResultRow[]
+// small card for one stat at the top of the page
+function StatBox({ value, label }: { value: string | number; label: string }) {
+  return (
+    <div className="flex min-w-[100px] flex-col gap-0.5 rounded-xl border border-[var(--border)] bg-[var(--bg-subtle)] px-4 py-3 max-sm:min-w-[calc(50%-6px)]">
+      <span className="text-xl font-bold tabular-nums text-[var(--accent)]">{value}</span>
+      <span className="text-[0.8rem] text-[var(--text-muted)]">{label}</span>
+    </div>
+  )
 }
 
-export function AthleteActivityView({ rows }: AthleteActivityViewProps) {
-  const yearData = useMemo(() => countsByYear(rows), [rows])
-  const eventData = useMemo(() => topCounts(rows, 'event'), [rows])
-  const venueData = useMemo(() => topCounts(rows, 'venue'), [rows])
-  const monthData = useMemo(() => countsByMonth(rows), [rows])
-  const summary = useMemo(() => activitySummary(rows), [rows])
+// activity tab on the athletes page
+// rows is every result row for the selected athlete (from AthletesPage)
+export function AthleteActivityView({ rows }: { rows: AthleteResultRow[] }) {
+  // headline numbers shown in the stat cards
+  const summary = activitySummary(rows)
+
+  // data passed into the charts below
+  const yearData = countsByYear(rows)
+  const eventData = topCounts(rows, 'event')
+  const venueData = topCounts(rows, 'venue')
+  const monthData = countsByMonth(rows)
 
   return (
-    <div className="athlete-activity">
-      <div className="activity-summary">
-        <div className="activity-summary__stat">
-          <span className="activity-summary__value">{summary.totalResults}</span>
-          <span className="activity-summary__label">Total results</span>
-        </div>
-        <div className="activity-summary__stat">
-          <span className="activity-summary__value">{summary.yearsActive}</span>
-          <span className="activity-summary__label">Years active</span>
-        </div>
-        <div className="activity-summary__stat">
-          <span className="activity-summary__value">{summary.uniqueEvents}</span>
-          <span className="activity-summary__label">Events</span>
-        </div>
-        <div className="activity-summary__stat">
-          <span className="activity-summary__value">{summary.uniqueVenues}</span>
-          <span className="activity-summary__label">Venues</span>
-        </div>
+    <div className="flex flex-col gap-5">
+      {/* top row of summary cards */}
+      <div className="flex flex-wrap gap-3">
+        <StatBox value={summary.totalResults} label="Total results" />
+        <StatBox value={summary.yearsActive} label="Years active" />
+        <StatBox value={summary.uniqueEvents} label="Events" />
+        <StatBox value={summary.uniqueVenues} label="Venues" />
+        {/* only show busiest year when we have at least one result in that year */}
         {summary.busiestYear.count > 0 && (
-          <div className="activity-summary__stat">
-            <span className="activity-summary__value">{summary.busiestYear.year}</span>
-            <span className="activity-summary__label">
-              Busiest year ({summary.busiestYear.count})
-            </span>
-          </div>
+          <StatBox
+            value={summary.busiestYear.year}
+            label={`Busiest year (${summary.busiestYear.count})`}
+          />
         )}
       </div>
 
+      {/* line chart showing how many results per calendar year */}
       <YearLineChart title="Results per year" data={yearData} />
 
-      <div className="chart-grid">
+      {/* three bar charts side by side (stacked on mobile) */}
+      <div className="grid grid-cols-3 items-start gap-4 max-sm:grid-cols-1">
         <CountBarChart title="Events competed" data={eventData} />
         <CountBarChart title="Venues visited" data={venueData} />
         <CountBarChart title="Seasonality (by month)" data={monthData} />

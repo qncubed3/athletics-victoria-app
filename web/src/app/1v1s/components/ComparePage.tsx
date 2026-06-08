@@ -2,9 +2,12 @@
 
 import { useState } from 'react'
 import type { AthleteSuggestion } from '@/types/athlete'
+import { cn } from '@/lib/cn'
 import { CompareResults } from './CompareResults'
 import { CompareSearchRow } from './CompareSearchRow'
 import { useAthleteCompare } from './useAthleteCompare'
+
+const statusClass = 'rounded-xl px-5 py-4 text-[0.95rem] text-[var(--text-muted)]'
 
 export function ComparePage() {
   const [athlete1, setAthlete1] = useState<AthleteSuggestion | null>(null)
@@ -17,7 +20,7 @@ export function ComparePage() {
   const athlete2Label = athlete2?.displayName ?? ''
 
   return (
-    <div className="compare-page">
+    <div className="flex flex-col gap-6">
       <CompareSearchRow
         athlete1={athlete1}
         athlete2={athlete2}
@@ -28,14 +31,20 @@ export function ComparePage() {
       />
 
       {!bothSelected && (
-        <p className="athletes-status">
+        <p className={cn(statusClass, 'bg-[var(--bg-subtle)]')}>
           Select two athletes to compare overlapping results (same date, event, and venue).
         </p>
       )}
 
-      {loading && <div className="athletes-status">Comparing athletes…</div>}
+      {loading && (
+        <div className={cn(statusClass, 'bg-[var(--bg-subtle)]')}>Comparing athletes…</div>
+      )}
 
-      {error && <div className="athletes-status athletes-status--error">{error}</div>}
+      {error && (
+        <div className={cn(statusClass, 'bg-[var(--error-bg)] text-[var(--error-text)]')}>
+          {error}
+        </div>
+      )}
 
       {compare && !loading && !error && (
         <CompareResults

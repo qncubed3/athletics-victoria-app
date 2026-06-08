@@ -10,7 +10,7 @@ export function formatApiName(apiName: string) {
 // green win, red loss, blue tie (see compare endpoint winner field)
 export function perfCellClass(side: 1 | 2, winner: CompareWinner) {
   if (winner === -1) return ''
-  if (winner === 0) return 'compare-table__perf--tie'
-  if (winner === side) return 'compare-table__perf--win'
-  return 'compare-table__perf--loss'
+  if (winner === 0) return 'bg-[var(--tie-bg)] !text-[var(--tie-text)]'
+  if (winner === side) return 'bg-[var(--win-bg)] !text-[var(--win-text)]'
+  return 'bg-[var(--loss-bg)] !text-[var(--loss-text)]'
 }

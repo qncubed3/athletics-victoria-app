@@ -8,6 +8,7 @@ import type {
   AthleteSuggestion,
 } from '@/types/athlete'
 import { AthleteSearchPicker } from '@/app/components/AthleteSearchPicker'
+import { cn } from '@/lib/cn'
 import { AthleteActivityView } from './AthleteActivityView'
 import { AthleteRecordsView } from './AthleteRecordsView'
 import { AthleteResultsView, type ResultFilters } from './AthleteResultsView'
@@ -97,7 +98,7 @@ export function AthletesPage() {
   }
 
   return (
-    <div className="athletes-page">
+    <div className="flex flex-col gap-6">
       <AthleteSearchPicker
         id="athlete-search"
         label="Search athletes"
@@ -107,22 +108,32 @@ export function AthletesPage() {
         showRegistryHints
       />
 
-      {resultsLoading && <div className="athletes-status">Loading results…</div>}
+      {resultsLoading && (
+        <div className="rounded-xl bg-[var(--bg-subtle)] px-5 py-4 text-[0.95rem] text-[var(--text-muted)]">
+          Loading results…
+        </div>
+      )}
 
       {resultsError && (
-        <div className="athletes-status athletes-status--error">{resultsError}</div>
+        <div className="rounded-xl bg-[var(--error-bg)] px-5 py-4 text-[0.95rem] text-[var(--error-text)]">
+          {resultsError}
+        </div>
       )}
 
       {results && !resultsLoading && (
-        <section className="athletes-results">
-          <header className="athletes-results__header">
-            <h3>{results.data.athlete_info.athlete ?? selected?.displayName}</h3>
-            <div className="athletes-results__meta">
+        <section>
+          <header className="mb-4">
+            <h3 className="m-0 mb-2 text-[1.35rem] font-bold text-[var(--text-primary)]">
+              {results.data.athlete_info.athlete ?? selected?.displayName}
+            </h3>
+            <div className="flex flex-wrap gap-3 text-[0.875rem] text-[var(--text-muted)]">
               {results.data.athlete_info.club && (
-                <span>Club {results.data.athlete_info.club}</span>
+                <span className="rounded-lg bg-[var(--bg-muted)] px-2.5 py-1">
+                  Club {results.data.athlete_info.club}
+                </span>
               )}
               {results.data.athlete_info.bib && (
-                <span>
+                <span className="rounded-lg bg-[var(--bg-muted)] px-2.5 py-1">
                   Bib {results.data.athlete_info.bib}
                   {results.data.athlete_info.bib_year
                     ? ` (${results.data.athlete_info.bib_year})`
@@ -130,12 +141,18 @@ export function AthletesPage() {
                 </span>
               )}
               {results.data.athlete_info.recent_result_age && (
-                <span>Age {results.data.athlete_info.recent_result_age}</span>
+                <span className="rounded-lg bg-[var(--bg-muted)] px-2.5 py-1">
+                  Age {results.data.athlete_info.recent_result_age}
+                </span>
               )}
             </div>
 
             {results.data.results.length > 0 && (
-              <div className="athlete-tabs" role="tablist" aria-label="Athlete views">
+              <div
+                className="mt-5 flex flex-wrap gap-1.5 border-t border-[var(--border)] pt-4"
+                role="tablist"
+                aria-label="Athlete views"
+              >
                 {TABS.map((tab) => (
                   <button
                     key={tab.id}
@@ -144,7 +161,11 @@ export function AthletesPage() {
                     id={`athlete-tab-${tab.id}`}
                     aria-selected={activeTab === tab.id}
                     aria-controls={`athlete-panel-${tab.id}`}
-                    className={`athlete-tabs__tab ${activeTab === tab.id ? 'athlete-tabs__tab--active' : ''}`}
+                    className={cn(
+                      'cursor-pointer rounded-full border border-[var(--border)] bg-[var(--bg-panel)] px-4 py-2 text-[0.875rem] font-medium text-[var(--text-muted)] transition-[background,color,border-color,box-shadow] duration-150 hover:border-[var(--text-faint)] hover:text-[var(--text-primary)]',
+                      activeTab === tab.id &&
+                        'border-[var(--accent)] bg-[var(--accent)] font-semibold text-white shadow-[var(--shadow-pill)]'
+                    )}
                     onClick={() => setActiveTab(tab.id)}
                   >
                     {tab.label}
@@ -155,10 +176,12 @@ export function AthletesPage() {
           </header>
 
           {results.data.results.length === 0 ? (
-            <p className="athletes-status">No results found for this athlete.</p>
+            <p className="rounded-xl bg-[var(--bg-subtle)] px-5 py-4 text-[0.95rem] text-[var(--text-muted)]">
+              No results found for this athlete.
+            </p>
           ) : (
             <div
-              className="athlete-tab-panel"
+              className="mt-1"
               role="tabpanel"
               id={`athlete-panel-${activeTab}`}
               aria-labelledby={`athlete-tab-${activeTab}`}

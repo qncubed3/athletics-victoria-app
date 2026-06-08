@@ -33,7 +33,7 @@ export function writeCachedIndex(index: AthleteSearchEntry[]) {
   try {
     sessionStorage.setItem(CACHE_KEY, JSON.stringify(index))
   } catch {
-    // quota or private mode — ignore
+    // ignore when storage is blocked (quota or private mode)
   }
 }
 
